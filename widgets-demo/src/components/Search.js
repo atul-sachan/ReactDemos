@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const Search = () => {
-  const [term, setTerm] = useState("");
+  const [term, setTerm] = useState("programming");
+  const [debouncedTerm, SetDebouncedTerm] = useState(term);
   const [results, setResults] = useState([]);
 
   // useEffect(()=>{
@@ -17,7 +18,17 @@ const Search = () => {
   //     console.log("I RUN AFTER EVERY RENDER AND AT INITIAL RENDER and DATA HAS CHANGED");
   // }, [term] );
 
-  useEffect(() => {
+  useEffect(()=>{
+    const timerId = setTimeout(()=>{
+      SetDebouncedTerm(term);
+    },1000) 
+
+    return () =>{
+      clearTimeout(timerId);
+    };
+  }, [term]);
+
+  useEffect(()=>{
     const search = async () => {
       const { data } = await axios.get("https://en.wikipedia.org/w/api.php", {
         params: {
@@ -25,19 +36,14 @@ const Search = () => {
           list: "search",
           origin: "*",
           format: "json",
-          srsearch: term,
+          srsearch: debouncedTerm,
         },
       });
 
       setResults(data.query.search);
     };
-
-    const timeoutId = setTimeout(() => {
-      if (term) {
-        search();
-      }
-    }, 500);
-  }, [term]);
+    search();
+  },[debouncedTerm]);
 
   const renderedResults = results.map((result) => {
     return (
